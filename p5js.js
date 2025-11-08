@@ -172,8 +172,7 @@ function mousePressed() {
 
     if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
         gridTarget[i][j] = gridTarget[i][j] === 1 ? 0 : 1;
-        gridOther[i][j] = gridOther[i][j] === 1 ? 0 : 1;
-        //gridOther = gridTarget.map(row => row.slice());
+        //gridOther[i][j] = gridOther[i][j] === 1 ? 0 : 1;
     }
 }
 
