@@ -1,0 +1,1 @@
+* Convways game of life with deterministic vs probabilistic
