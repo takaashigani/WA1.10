@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life with Adjustable Speed</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .controls {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 150px;
+        }
+        .speed-value {
+            min-width: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Conway's Game of Life</h1>
+    <div class="controls">
+        <button id="playButton">Play</button>
+        <button id="stepButton">Step</button>
+        <button id="resetButton">Reset</button>
+        <div class="slider-container">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="60" value="10">
+            <span id="speedValue" class="speed-value">10</span>
+        </div>
+    </div>
+    <div id="canvas-container"></div>
+
+    <script>
+        let gridSize = 8;
+        let cellSize;
+        let grid;
+        let nextGrid;
+
+        let isRunning = false;
+        let playButton, stepButton, resetButton;
+        let speedSlider, speedValue;
+
+        // Probabilities for each rule
+        let probUnderpopulation = 1.0;
+        let probSurvival = 1.0;
+        let probOverpopulation = 1.0;
+        let probReproduction = 1.0;
+
+        // Timing variables
+        let lastUpdateTime = 0;
+        let updateInterval = 100; // milliseconds (10 FPS default)
+
+        function setup() {
+            const canvas = createCanvas(400, 400);
+            canvas.parent('canvas-container');
+            
+            cellSize = width / gridSize;
+            grid = create2DArray(gridSize);
+            nextGrid = create2DArray(gridSize);
+            randomizeGrid();
+
+            // Create control buttons
+            playButton = select('#playButton');
+            playButton.mousePressed(togglePlay);
+            
+            stepButton = select('#stepButton');
+            stepButton.mousePressed(stepSimulation);
+            
+            resetButton = select('#resetButton');
+            resetButton.mousePressed(resetGrid);
+            
+            // Speed control
+            speedSlider = select('#speedSlider');
+            speedValue = select('#speedValue');
+            speedSlider.input(updateSpeed);
+            
+            updateSpeed(); // Initialize the speed display
+        }
+
+        function draw() {
+            background(220);
+            drawGrid();
+
+            if (isRunning) {
+                let currentTime = millis();
+                if (currentTime - lastUpdateTime > updateInterval) {
+                    computeNextGeneration();
+                    swapGrids();
+                    lastUpdateTime = currentTime;
+                }
+            }
+        }
+
+        function updateSpeed() {
+            // Map slider value (1-60) to update interval (1000ms to 16ms)
+            // This gives a range from ~1 FPS to ~60 FPS
+            let sliderValue = parseInt(speedSlider.value());
+            updateInterval = map(sliderValue, 1, 60, 1000, 16);
+            speedValue.html(sliderValue);
+        }
+
+        function togglePlay() {
+            isRunning = !isRunning;
+            playButton.html(isRunning ? 'Pause' : 'Play');
+            lastUpdateTime = millis(); // Reset timer when toggling
+        }
+
+        function stepSimulation() {
+            if (!isRunning) {
+                computeNextGeneration();
+                swapGrids();
+            }
+        }
+
+        function resetGrid() {
+            isRunning = false;
+            playButton.html('Play');
+            randomizeGrid();
+        }
+
+        function mousePressed() {
+            let j = floor(mouseX / cellSize);
+            let i = floor(mouseY / cellSize);
+            if (i >= 0 && i < gridSize && j >= 0 && j < gridSize) {
+                grid[i][j] = grid[i][j] === 1 ? 0 : 1;
+            }
+        }
+
+        function create2DArray(size) {
+            let arr = new Array(size);
+            for (let i = 0; i < size; i++) {
+                arr[i] = new Array(size).fill(0);
+            }
+            return arr;
+        }
+
+        function randomizeGrid() {
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    grid[i][j] = random() < 0.5 ? 1 : 0;
+                }
+            }
+        }
+
+        function drawGrid() {
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    fill(grid[i][j] === 1 ? 'black' : 'white');
+                    stroke(200);
+                    rect(j * cellSize, i * cellSize, cellSize, cellSize);
+                }
+            }
+        }
+
+        function computeNextGeneration() {
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    let neighbors = countLiveNeighbors(i, j);
+                    let cell = grid[i][j];
+
+                    if (cell === 1) {
+                        if (neighbors < 2 && random() < probUnderpopulation) {
+                            nextGrid[i][j] = 0;
+                        } else if ((neighbors === 2 || neighbors === 3) && random() < probSurvival) {
+                            nextGrid[i][j] = 1;
+                        } else if (neighbors > 3 && random() < probOverpopulation) {
+                            nextGrid[i][j] = 0;
+                        } else {
+                            nextGrid[i][j] = cell;
+                        }
+                    } else {
+                        if (neighbors === 3 && random() < probReproduction) {
+                            nextGrid[i][j] = 1;
+                        } else {
+                            nextGrid[i][j] = cell;
+                        }
+                    }
+                }
+            }
+        }
+
+        function countLiveNeighbors(x, y) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    let ni = (x + i + gridSize) % gridSize;
+                    let nj = (y + j + gridSize) % gridSize;
+                    count += grid[ni][nj];
+                }
+            }
+            return count;
+        }
+
+        function swapGrids() {
+            let temp = grid;
+            grid = nextGrid;
+            nextGrid = temp;
+        }
+    </script>
+</body>
+</html>
