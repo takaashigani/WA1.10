@@ -1,13 +1,101 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>p5.js Sketch</title>
-    <!-- Import p5.js from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life with Adjustable Speed</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="p5js.js"></script>
-  </head>
-  <body>
-    <!-- Your sketch file -->
-  </body>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .controls {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 150px;
+        }
+        .speed-value {
+            min-width: 40px;
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body>
+    <h1>Conway's Game of Life</h1>
+    <div class="controls">
+        <button id="playButton">Play</button>
+        <button id="stepButton">Step</button>
+        <button id="resetButton">Reset</button>
+        <button id="wrapToggleButton">Wraparound: On</button>
+        <div class="slider-container">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="60" value="10">
+            <span id="speedValue" class="speed-value">10</span>
+        </div>
+        <div id="controls">
+            <label for="underpopulationSlider">Underpopulation Probability</label>
+            <input type="range" id="underpopulationSlider" min="0" max="1" step="0.01" value="1.0">
+          
+            <label for="survivalSlider">Survival Probability</label>
+            <input type="range" id="survivalSlider" min="0" max="1" step="0.01" value="1.0">
+          
+            <label for="overpopulationSlider">Overpopulation Probability</label>
+            <input type="range" id="overpopulationSlider" min="0" max="1" step="0.01" value="1.0">
+          
+            <label for="reproductionSlider">Reproduction Probability</label>
+            <input type="range" id="reproductionSlider" min="0" max="1" step="0.01" value="1.0">
+          </div>
+    </div>
+    
+    <ol>
+        <li>
+            Any live cell with fewer than two live neighbours has a chance of <span id="underpopulationValue">100</span>% to die, as if caused by underpopulation.
+        </li>
+        <li>
+            Any live cell with two or three live neighbours has a chance of <span id="survivalValue">100</span>% to live on to the next generation.
+        </li>
+        <li>
+            Any live cell with more than three live neighbours has a chance of <span id="overpopulationValue">100</span>% to die, as if by overpopulation.
+        </li>
+        <li>
+            Any dead cell with exactly three live neighbours has a chance of <span id="reproductionValue">100</span>% to become a live cell, as if by reproduction.
+        </li>
+    </ol>
+
+    <div id="canvas-container"></div>
+
+ </body>
 </html>
